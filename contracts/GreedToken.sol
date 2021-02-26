@@ -65,6 +65,11 @@ contract Greed is IGreed {
         return true;
     }
 
+    function mint(address to, uint value) external override returns (bool) {
+        _mint(to, value);
+        return true;
+    }
+
     function transfer(address to, uint value) external override returns (bool) {
         _transfer(msg.sender, to, value);
         return true;
