@@ -7,13 +7,13 @@ import './interfaces/IGreed.sol';
 contract Aggregator {
     using SafeMath for uint;
 
-    uint public constant D = 6500 * 30;
-    uint public constant PS = 0.01 ether;
-    uint public constant PE = 0.05 ether;
+    uint public constant DURATION = 6500 * 30;
+    uint public constant PRICE_START = 0.01 ether;
+    uint public constant PRICE_END = 0.05 ether;
     uint public constant OFFSET = 100;
 
-    uint public Ns;
-    uint public Ne;
+    uint public blockNumberStart;
+    uint public blockNumberEnd;
     address public owner;
     uint public QTotalSold;
     bool public isStarted;
@@ -29,18 +29,18 @@ contract Aggregator {
 
     function start() external {
         require(msg.sender == owner, "ASC: PERMISSION DENIED");
-        Ns = block.number;
+        blockNumberStart = block.number;
         QTotalSold = 0;
         isStarted = true;
     }
 
     function deposit(uint256 strike) external payable {
-        uint N = block.number;
+        uint blockNumberCurrent = block.number;
         require(isStarted, "ASC: NOT STARTED");
-        require(N <= Ns.add(D), "ASC: PERIOD IS OVER");
-        require(strike >= PE, "ASC: Strike Price IS LOW");
-        uint Pb = PS.add((PE.sub(PS)).mul(N.sub(Ns)).div(D));
-        uint Qest = msg.value.div(Pb);
+        require(blockNumberCurrent <= blockNumberStart.add(DURATION), "ASC: PERIOD IS OVER");
+        require(strike >= PRICE_END, "ASC: Strike Price IS LOW");
+        uint priceBound = PRICE_START.add((PRICE_END.sub(PRICE_START)).mul(blockNumberCurrent.sub(blockNumberStart)).div(DURATION));
+        uint Qest = msg.value.div(priceBound);
         uint k = coeff(Qest);
         uint Qsold = Qest.mul(k).div(100);
         QTotalSold = QTotalSold.add(Qsold);
@@ -70,7 +70,7 @@ contract Aggregator {
     }
 
     function end() external {
-        require (block.number >= Ns.add(D), "ASC: PERIOD IS NOT OVER");
+        require (block.number >= blockNumberStart.add(DURATION), "ASC: PERIOD IS NOT OVER");
         IGreed(greed).mint(to, QTotalSold.mul(2));
     }
 }
