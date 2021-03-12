@@ -1,14 +1,18 @@
-"use strict";
-let contract = require('truffle-contract');
+import { utils, BigNumber } from 'ethers';
+import { getMessage, TypedData } from 'eip-712';
+import { config } from "dotenv";
 let Web3 = require('web3');
-let ethers = require('ethers');
-let dotenv = require('dotenv');
-let BigNumber = require('bignumber.js');
-let HDWalletProvider = require('@truffle/hdwallet-provider');
-const { sign } = require('crypto');
-const { encode } = require('punycode');
+let HDWalletProvider = require("@truffle/hdwallet-provider");
 
-dotenv.config();
+
+config();
+
+console.log(process.env.ACCOUNT_PRIVATE_KEY);
+const provider = new HDWalletProvider(process.env.ACCOUNT_PRIVATE_KEY, `https://kovan.infura.io/v3/${process.env.INFURA_API_KEY}`); // change to main_infura_server or another testnet. 
+const web3 = new Web3(provider);
+const owner = provider.addresses[0];
+console.log("owner:" + owner);
+
 const orderBookJSON = {
     "address": "0xb273F3FEd01Ab4072659bd22Ab5E6d8ea562411b",
     "abi": [
@@ -559,50 +563,82 @@ const orderBookJSON = {
       }
     }
   }
-console.log(process.env)
-const provider = new HDWalletProvider(process.env.ACCOUNT_PRIVATE_KEY, `https://kovan.infura.io/v3/${process.env.INFURA_API_KEY}`); // change to main_infura_server or another testnet. 
 
-const web3 = new Web3(provider);
-const owner = provider.addresses[0];
-console.log("owner:" + owner);
+const maker = owner;
+const fromToken = "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2";
+const toToken = "0x6b175474e89094c44da98b954eedeac495271d0f";
+
+const amountIn = utils.parseUnits("0.04", 18);
+const amountOutMin = utils.parseUnits("80", 18);
+const recipient = owner;
+const deadline = BigNumber.from(0x604c6f94);
+
+console.log(maker);
+console.log(fromToken);
+console.log(toToken);
+console.log(amountIn);
+console.log(amountOutMin);
+console.log(recipient);
+console.log(deadline);
+
+const typedData: TypedData = {
+  types: {
+    EIP712Domain: [
+        { name: 'name', type: 'string' },
+        { name: 'version', type: 'string' },
+        { name: 'chainId', type: 'uint256' },
+        { name: 'verifyingContract', type: 'address' },
+    ],
+    Order: [
+        { name: "maker", type: "address" },
+        { name: "fromToken", type: "address" },
+        { name: "toToken", type: "address" },
+        { name: "amountIn", type: "uint256" },
+        { name: "amountOutMin", type: "uint256" },
+        { name: "recipient", type: "address" },
+        { name: "deadline", type: "uint256" }
+    ]
+  },
+  primaryType: 'Order',
+  domain: {
+    name: "OrderBook",
+    version: "1",
+    chainId: 42,
+    verifyingContract: orderBookJSON.address
+  },
+  message: {
+    maker,
+    fromToken,
+    toToken,
+    amountIn,
+    amountOutMin,
+    recipient,
+    deadline
+  }
+};
+
+// Generate a random private key
+const privateKey = `0x${process.env.ACCOUNT_PRIVATE_KEY}`;
+const signingKey = new utils.SigningKey(privateKey);
+
+// Get a signable message from the typed data
+const message = getMessage(typedData, true);
+
+// Sign the message with the private key
+const { r, s, v } = signingKey.signDigest(message);
+
+/* eslint-disable no-console */
+console.log(`Message: 0x${message.toString('hex')}`);
+console.log(`Signature: (${r}, ${s}, ${v})`);
 
 async function placeOrders() {
     const orderBookContract = new web3.eth.Contract(orderBookJSON.abi, orderBookJSON.address);
-    let ts = Math.round(new Date().getTime() / 1000);
-    const fromToken = "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2";
-    const toToken = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48";
-    const amountIn = web3.utils.toBN(0x2386f26fc10000);
-    const amountOutMin = web3.utils.toBN(0x1312d00);
-    // const recipient = address(this);
-    const deadline = ts + (24 * 3600);
-    const encodedParams = web3.eth.abi.encodeParameters(['address', 'address', 'address', 'uint256', 'uint256', 'address', 'uint256'], 
-                                                        [owner, fromToken, toToken, amountIn, amountOutMin, owner, deadline]);
-    console.log(encodedParams);
-    const hash = web3.utils.keccak256(encodedParams);
-    const signature = await web3.eth.sign(hash, owner);
 
-    console.log(signature);
-    console.log(typeof(signature));
-
-    console.log("get sign params")
-    const r = signature.slice(0, 66);
-    const s = `0x${signature.slice(66, 130)}`;
-    const v = web3.utils.toBN(signature.slice(130, 132));
-
-    
-    
-    const signingAddress = web3.eth.accounts.recover(hash, signature);
-
-    console.log(signingAddress);
-    console.log(r);
-    console.log(s);
-    console.log(v);
-                
     orderBookContract.methods.createOrder([owner, fromToken, toToken, amountIn, amountOutMin, owner, deadline, v, r, s]).send({ from: owner })
-        .on('receipt', function (receipt) {
+        .on('receipt', function (receipt:any) {
             console.log(receipt);
         })
-        .on('error', function (error) {
+        .on('error', function (error:any) {
             console.log("ERROR");
             console.log(error);
         })
@@ -610,4 +646,3 @@ async function placeOrders() {
 }
 
 placeOrders();
-

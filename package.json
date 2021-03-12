@@ -42,6 +42,8 @@
   },
   "dependencies": {
     "bignumber.js": "^9.0.1",
+    "eip-712": "^0.4.3",
+    "eth-permit": "^0.1.9",
     "truffle-contract": "^4.0.31",
     "web3": "^1.3.4"
   }
