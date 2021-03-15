@@ -23,7 +23,7 @@ contract Aggregator {
     address public greedAddr;
     address public orderAddr;
     address public to;
-    uint orderId;
+    uint public orderId;
 
     event OrderCreated(address indexed maker, uint256 orderId, uint256 timestamp, uint256 strike, uint256 amount);
 
@@ -56,7 +56,7 @@ contract Aggregator {
         totalAmountSold = totalAmountSold.add(amountSold);
 
         //Create event for Order NFT
-        IOrder(orderAddr).createOrder(msg.sender, greedAddr, WETH, amountSold, amountSold.mul(strike), msg.sender, blockNumberStart.add(orderId).add(DEADLINE), 0, 0, 0);
+        IOrder(orderAddr).createOrder(msg.sender, greedAddr, WETH, amountSold, amountSold.mul(strike), msg.sender, blockNumberStart.add(orderId).add(DEADLINE));
         emit OrderCreated(msg.sender, orderId, now, strike, amountSold);
         orderId = orderId.add(1);
     }

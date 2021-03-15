@@ -4,15 +4,941 @@ import { config } from "dotenv";
 let Web3 = require('web3');
 let HDWalletProvider = require("@truffle/hdwallet-provider");
 
-
 config();
 
 console.log(process.env.ACCOUNT_PRIVATE_KEY);
-const provider = new HDWalletProvider(process.env.ACCOUNT_PRIVATE_KEY, `https://kovan.infura.io/v3/${process.env.INFURA_API_KEY}`); // change to main_infura_server or another testnet. 
-const web3 = new Web3(provider);
-const owner = provider.addresses[0];
+const orderBookProvider = new HDWalletProvider(process.env.ACCOUNT_PRIVATE_KEY, `https://kovan.infura.io/v3/${process.env.INFURA_API_KEY}`); // change to main_infura_server or another testnet. 
+
+const owner = orderBookProvider.addresses[0];
 console.log("owner:" + owner);
 
+const ASCProvider = new HDWalletProvider(process.env.ACCOUNT_PRIVATE_KEY, `https://infura.io/v3/${process.env.INFURA_API_KEY}`);
+
+const ASCJSON = {
+  "address": "",
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_greedAddr",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "_orderAddr",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "_to",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "constructor"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "maker",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "orderId",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "timestamp",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "strike",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "amount",
+          "type": "uint256"
+        }
+      ],
+      "name": "OrderCreated",
+      "type": "event"
+    },
+    {
+      "inputs": [],
+      "name": "DEADLINE",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "DURATION",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "OFFSET",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "PRICE_END",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "PRICE_START",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "WETH",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "blockNumberEnd",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "blockNumberStart",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "strike",
+          "type": "uint256"
+        }
+      ],
+      "name": "deposit",
+      "outputs": [],
+      "stateMutability": "payable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "end",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "greedAddr",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "isStarted",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "orderAddr",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "owner",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "start",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "to",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "totalAmountSold",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ]  
+}
+
+const orderNftJSON = {
+  "address": "",
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_pool",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "constructor"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "owner",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "approved",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "tokenId",
+          "type": "uint256"
+        }
+      ],
+      "name": "Approval",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "string",
+          "name": "orderName",
+          "type": "string"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "orderQuantity",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "orderRarity",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "orderType",
+          "type": "uint256"
+        }
+      ],
+      "name": "OrderGroupCreated",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "itmeType",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "quantity",
+          "type": "uint256"
+        }
+      ],
+      "name": "OrdersCreated",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "from",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "to",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "tokenId",
+          "type": "uint256"
+        }
+      ],
+      "name": "Transfer",
+      "type": "event"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "_price",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_orderId",
+          "type": "uint256"
+        }
+      ],
+      "name": "addAuction",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "addrAdmin",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_to",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_orderId",
+          "type": "uint256"
+        }
+      ],
+      "name": "approve",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_owner",
+          "type": "address"
+        }
+      ],
+      "name": "balanceOf",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "count",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "_orderId",
+          "type": "uint256"
+        }
+      ],
+      "name": "bidAuction",
+      "outputs": [],
+      "stateMutability": "payable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "_orderId",
+          "type": "uint256"
+        }
+      ],
+      "name": "cancelAuction",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_maker",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "_fromToken",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "_toToken",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_amountIn",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_amountOutMin",
+          "type": "uint256"
+        },
+        {
+          "internalType": "address",
+          "name": "_recipient",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_deadline",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint8",
+          "name": "_v",
+          "type": "uint8"
+        },
+        {
+          "internalType": "bytes32",
+          "name": "_r",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "bytes32",
+          "name": "_s",
+          "type": "bytes32"
+        }
+      ],
+      "name": "createOrder",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "_id",
+          "type": "uint256"
+        }
+      ],
+      "name": "getOrder",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "maker",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "fromToken",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "toToken",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "amountIn",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "amountOutMin",
+          "type": "uint256"
+        },
+        {
+          "internalType": "address",
+          "name": "recipient",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "deadline",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint8",
+          "name": "v",
+          "type": "uint8"
+        },
+        {
+          "internalType": "bytes32",
+          "name": "r",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "bytes32",
+          "name": "s",
+          "type": "bytes32"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "_auctionId",
+          "type": "uint256"
+        }
+      ],
+      "name": "getOrderAuction",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "seller",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "price",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "orderId",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "_orderId",
+          "type": "uint256"
+        }
+      ],
+      "name": "getOrderAuctionByOrderId",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "seller",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "price",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "orderId",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "getOrderAuctionCount",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "getOrderIdsOnSale",
+      "outputs": [
+        {
+          "internalType": "uint256[]",
+          "name": "",
+          "type": "uint256[]"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "getOrderQuantity",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "quantity",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "name",
+      "outputs": [
+        {
+          "internalType": "string",
+          "name": "",
+          "type": "string"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "name": "orderAuctions",
+      "outputs": [
+        {
+          "internalType": "address payable",
+          "name": "seller",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "startingPrice",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "orderId",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "name": "orderIndexToApproved",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "name": "orderIndexToOwner",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "name": "orderQuantityLimit",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_owner",
+          "type": "address"
+        }
+      ],
+      "name": "ordersOfOwner",
+      "outputs": [
+        {
+          "internalType": "uint256[]",
+          "name": "ownerOrders",
+          "type": "uint256[]"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "_orderId",
+          "type": "uint256"
+        }
+      ],
+      "name": "ownerOf",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "owner",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "name": "ownershipOrderCount",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "symbol",
+      "outputs": [
+        {
+          "internalType": "string",
+          "name": "",
+          "type": "string"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "totalSupply",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_to",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_orderId",
+          "type": "uint256"
+        }
+      ],
+      "name": "transfer",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "_from",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "_to",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "_orderId",
+          "type": "uint256"
+        }
+      ],
+      "name": "transferFrom",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    }
+  ]
+}
 const orderBookJSON = {
     "address": "0xb273F3FEd01Ab4072659bd22Ab5E6d8ea562411b",
     "abi": [
@@ -564,85 +1490,115 @@ const orderBookJSON = {
     }
   }
 
-const maker = owner;
-const fromToken = "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2";
-const toToken = "0x6b175474e89094c44da98b954eedeac495271d0f";
+// const maker = owner;
+// const fromToken = "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2";
+// const toToken = "0x6b175474e89094c44da98b954eedeac495271d0f";
 
-const amountIn = utils.parseUnits("0.04", 18);
-const amountOutMin = utils.parseUnits("80", 18);
-const recipient = owner;
-const deadline = BigNumber.from(0x604c6f94);
+// const amountIn = utils.parseUnits("0.04", 18);
+// const amountOutMin = utils.parseUnits("80", 18);
+// const recipient = owner;
+// const deadline = BigNumber.from(0x604c6f94);
 
-console.log(maker);
-console.log(fromToken);
-console.log(toToken);
-console.log(amountIn);
-console.log(amountOutMin);
-console.log(recipient);
-console.log(deadline);
-
-const typedData: TypedData = {
-  types: {
-    EIP712Domain: [
-        { name: 'name', type: 'string' },
-        { name: 'version', type: 'string' },
-        { name: 'chainId', type: 'uint256' },
-        { name: 'verifyingContract', type: 'address' },
-    ],
-    Order: [
-        { name: "maker", type: "address" },
-        { name: "fromToken", type: "address" },
-        { name: "toToken", type: "address" },
-        { name: "amountIn", type: "uint256" },
-        { name: "amountOutMin", type: "uint256" },
-        { name: "recipient", type: "address" },
-        { name: "deadline", type: "uint256" }
-    ]
-  },
-  primaryType: 'Order',
-  domain: {
-    name: "OrderBook",
-    version: "1",
-    chainId: 42,
-    verifyingContract: orderBookJSON.address
-  },
-  message: {
-    maker,
-    fromToken,
-    toToken,
-    amountIn,
-    amountOutMin,
-    recipient,
-    deadline
-  }
-};
-
-// Generate a random private key
-const privateKey = `0x${process.env.ACCOUNT_PRIVATE_KEY}`;
-const signingKey = new utils.SigningKey(privateKey);
-
-// Get a signable message from the typed data
-const message = getMessage(typedData, true);
-
-// Sign the message with the private key
-const { r, s, v } = signingKey.signDigest(message);
-
-/* eslint-disable no-console */
-console.log(`Message: 0x${message.toString('hex')}`);
-console.log(`Signature: (${r}, ${s}, ${v})`);
-
-async function placeOrders() {
-    const orderBookContract = new web3.eth.Contract(orderBookJSON.abi, orderBookJSON.address);
-
-    orderBookContract.methods.createOrder([owner, fromToken, toToken, amountIn, amountOutMin, owner, deadline, v, r, s]).send({ from: owner })
-        .on('receipt', function (receipt:any) {
-            console.log(receipt);
-        })
-        .on('error', function (error:any) {
-            console.log("ERROR");
-            console.log(error);
-        })
-    console.log(await orderBookContract.methods.numberOfAllHashes().call());
+interface Order {
+  maker: string,
+  fromToken: string,
+  toToken: string,
+  amountIn: BigNumber,
+  amountOutMin: BigNumber,
+  recipient: string,
+  deadline: BigNumber
 }
 
+let orders: Order[] = [];
+async function getOrders() {
+  const web3 = new Web3(ASCProvider);
+  const nftContract = new web3.eth.Contract(orderNftJSON.abi, orderNftJSON.address);
+  const ordersCount = await nftContract.methods.getOrderQuantity().call();
+  for (let i = 0; i < ordersCount; i++) {
+    const {maker, fromToken, toToken, amountIn, amountOutMin, recipient, deadline } = await nftContract.methods.getOrder(i).call();
+    orders.push({maker, fromToken, toToken, amountIn, amountOutMin, recipient, deadline});
+  }
+    
+}
+
+function signOrder(id: number) {
+
+  const {maker, fromToken, toToken, amountIn, amountOutMin, recipient, deadline} = orders[id];
+  console.log(maker);
+  console.log(fromToken);
+  console.log(toToken);
+  console.log(amountIn);
+  console.log(amountOutMin);
+  console.log(recipient);
+  console.log(deadline);
+
+  let typedData: TypedData = {
+    types: {
+      EIP712Domain: [
+          { name: 'name', type: 'string' },
+          { name: 'version', type: 'string' },
+          { name: 'chainId', type: 'uint256' },
+          { name: 'verifyingContract', type: 'address' },
+      ],
+      Order: [
+          { name: "maker", type: "address" },
+          { name: "fromToken", type: "address" },
+          { name: "toToken", type: "address" },
+          { name: "amountIn", type: "uint256" },
+          { name: "amountOutMin", type: "uint256" },
+          { name: "recipient", type: "address" },
+          { name: "deadline", type: "uint256" }
+      ]
+    },
+    primaryType: 'Order',
+    domain: {
+      name: "OrderBook",
+      version: "1",
+      chainId: 42,
+      verifyingContract: orderBookJSON.address
+    },
+    message: {
+      maker,
+      fromToken,
+      toToken,
+      amountIn,
+      amountOutMin,
+      recipient,
+      deadline
+    }
+  };
+
+  // Generate a random private key
+  const privateKey = `0x${process.env.ACCOUNT_PRIVATE_KEY}`;
+  const signingKey = new utils.SigningKey(privateKey);
+
+  // Get a signable message from the typed data
+  const message = getMessage(typedData, true);
+
+  // Sign the message with the private key
+  const { r, s, v } = signingKey.signDigest(message);
+
+  /* eslint-disable no-console */
+  console.log(`Message: 0x${message.toString('hex')}`);
+  console.log(`Signature: (${r}, ${s}, ${v})`);
+  return {r, s, v};
+}
+
+async function placeOrders() {
+  const web3 = new Web3(orderBookProvider);
+  const orderBookContract = new web3.eth.Contract(orderBookJSON.abi, orderBookJSON.address);
+  for (let i = 0; i < orders.length; i++) {
+    const {r, s, v} = signOrder(i);
+    orderBookContract.methods.createOrder([orders[i].maker, orders[i].fromToken, orders[i].toToken, orders[i].amountIn, orders[i].amountOutMin, orders[i].recipient, orders[i].deadline, v, r, s]).send({ from: owner })
+      .on('receipt', function (receipt:any) {
+          console.log(receipt);
+      })
+      .on('error', function (error:any) {
+          console.log("ERROR");
+          console.log(error);
+      })
+  }
+}
+
+getOrders();
 placeOrders();

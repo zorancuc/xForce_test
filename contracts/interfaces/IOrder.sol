@@ -8,8 +8,6 @@ interface IOrder {
         uint256 _amountIn,
         uint256 _amountOutMin,
         address _recipient,
-        uint256 _deadline,
-        uint8 _v,
-        bytes32 _r,
-        bytes32 _s) external ;
+        uint256 _deadline
+    ) external ;
 }

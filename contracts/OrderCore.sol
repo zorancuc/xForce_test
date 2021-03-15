@@ -28,13 +28,10 @@ contract OrderCore is OrderFactory
         uint256 amountIn,
         uint256 amountOutMin,
         address recipient,
-        uint256 deadline,
-        uint8 v,
-        bytes32 r,
-        bytes32 s
+        uint256 deadline
     ) {
         Order memory order = orders[_id];
-        return (order.maker, order.fromToken, order.toToken, order.amountIn, order.amountOutMin, order.recipient, order.deadline, order.v, order.r, order.s);
+        return (order.maker, order.fromToken, order.toToken, order.amountIn, order.amountOutMin, order.recipient, order.deadline);
     }
 
     /**

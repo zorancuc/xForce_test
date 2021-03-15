@@ -10,9 +10,6 @@ contract OrderBase
         uint256 amountOutMin;
         address recipient;
         uint256 deadline;
-        uint8 v;
-        bytes32 r;
-        bytes32 s;
     }
 
     address public                          addrAdmin;
@@ -59,12 +56,9 @@ contract OrderBase
         uint256 _amountIn,
         uint256 _amountOutMin,
         address _recipient,
-        uint256 _deadline,
-        uint8 _v,
-        bytes32 _r,
-        bytes32 _s) 
+        uint256 _deadline) 
     public {
-        Order memory _order = Order(_maker, _fromToken, _toToken, _amountIn, _amountOutMin, _recipient, _deadline, _v, _r, _s);
+        Order memory _order = Order(_maker, _fromToken, _toToken, _amountIn, _amountOutMin, _recipient, _deadline);
         orders.push(_order);
         uint256 newOrderId = orders.length - 1;
         _transfer(address(0), _maker, newOrderId);
