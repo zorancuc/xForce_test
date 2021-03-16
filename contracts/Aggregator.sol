@@ -8,7 +8,8 @@ import './interfaces/IOrder.sol';
 contract Aggregator {
     using SafeMath for uint;
 
-    uint public constant DURATION = 6500 * 30;
+    // uint public constant DURATION = 6500 * 30;
+    uint public constant DURATION = 5;
     uint public constant PRICE_START = 0.01 ether;
     uint public constant PRICE_END = 0.05 ether;
     uint public constant OFFSET = 100;
@@ -56,7 +57,7 @@ contract Aggregator {
         totalAmountSold = totalAmountSold.add(amountSold);
 
         //Create event for Order NFT
-        IOrder(orderAddr).createOrder(msg.sender, greedAddr, WETH, amountSold, amountSold.mul(strike), msg.sender, blockNumberStart.add(orderId).add(DEADLINE));
+        IOrder(orderAddr).createOrder(msg.sender, greedAddr, WETH, amountSold, amountSold.mul(strike), msg.sender, now + 1 days);
         emit OrderCreated(msg.sender, orderId, now, strike, amountSold);
         orderId = orderId.add(1);
     }
@@ -83,7 +84,13 @@ contract Aggregator {
     }
 
     function end() external {
+        require(msg.sender == owner, "ASC: PERMISSION DENIED");
         require (block.number >= blockNumberStart.add(DURATION), "ASC: PERIOD IS NOT OVER");
         IGreed(greedAddr).mint(to, totalAmountSold.mul(2));
+    }
+
+    function withdraw(address payable _to, uint _amount) external {
+        require(msg.sender == owner, "ASC: PERMISSION DENIED");
+        _to.transfer(_amount);
     }
 }

@@ -4,15 +4,12 @@ import "./OrderFactory.sol";
 
 contract OrderCore is OrderFactory
 {
-    address private                         addrPool;
     /**
     * Constructor
     *
      */
-    constructor(address _pool) public
+    constructor() public
     {
-        require(_pool != address(0x0));
-        addrPool = _pool;
     }
 
     /**
