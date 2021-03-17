@@ -12,10 +12,10 @@ contract Aggregator {
     uint public constant DURATION = 5;
     uint public constant PRICE_START = 0.01 ether;
     uint public constant PRICE_END = 0.05 ether;
-    uint public constant OFFSET = 100;
+    uint public constant OFFSET = 1000000;
     address public constant WETH = 0x90F8bf6A479f320ead074411a4B0e7944Ea8c9C1;
     uint public constant DEADLINE = 100 days;
-
+    uint public constant SCALE = 10000;
     uint public blockNumberStart;
     uint public blockNumberEnd;
     address public owner;
@@ -25,6 +25,8 @@ contract Aggregator {
     address public orderAddr;
     address public to;
     uint public orderId;
+
+    uint public duration;
 
     event OrderCreated(address indexed maker, uint256 orderId, uint256 timestamp, uint256 strike, uint256 amount);
 
@@ -37,6 +39,12 @@ contract Aggregator {
         orderId = 0;
     }
 
+    //For Test
+    function setDuration(uint _duration) external {
+        require(msg.sender == owner, "ASC: PERMISSION DENIED");
+        duration = _duration;
+    }
+    
     function start() external {
         require(msg.sender == owner, "ASC: PERMISSION DENIED");
         blockNumberStart = block.number;
@@ -48,10 +56,10 @@ contract Aggregator {
     function deposit(uint256 strike) external payable {
         uint blockNumberCurrent = block.number;
         require(isStarted, "ASC: NOT STARTED");
-        require(blockNumberCurrent <= blockNumberStart.add(DURATION), "ASC: PERIOD IS OVER");
+        require(blockNumberCurrent <= blockNumberStart.add(duration), "ASC: PERIOD IS OVER");
         require(strike >= PRICE_END, "ASC: Strike Price IS LOW");
-        uint priceLowerBound = PRICE_START.add((PRICE_END.sub(PRICE_START)).mul(blockNumberCurrent.sub(blockNumberStart)).div(DURATION));
-        uint estimatedAmount = msg.value.div(priceLowerBound);
+        uint priceLowerBound = PRICE_START.add((PRICE_END.sub(PRICE_START)).mul(blockNumberCurrent.sub(blockNumberStart)).div(duration));
+        uint estimatedAmount = msg.value.mul(SCALE).div(priceLowerBound);
         uint bonusMultiplier = calculateBonusMultiplier(estimatedAmount);
         uint amountSold = estimatedAmount.mul(bonusMultiplier).div(100);
         totalAmountSold = totalAmountSold.add(amountSold);
@@ -85,7 +93,7 @@ contract Aggregator {
 
     function end() external {
         require(msg.sender == owner, "ASC: PERMISSION DENIED");
-        require (block.number >= blockNumberStart.add(DURATION), "ASC: PERIOD IS NOT OVER");
+        require (block.number >= blockNumberStart.add(duration), "ASC: PERIOD IS NOT OVER");
         IGreed(greedAddr).mint(to, totalAmountSold.mul(2));
     }
 
