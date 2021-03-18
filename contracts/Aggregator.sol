@@ -25,17 +25,18 @@ contract Aggregator {
     address public orderAddr;
     address public to;
     uint public orderId;
+    address payable public poolAddr;
 
     uint public duration;
 
     event OrderCreated(address indexed maker, uint256 orderId, uint256 timestamp, uint256 strike, uint256 amount);
 
-    constructor(address _greedAddr, address _orderAddr, address _to) public {
+    constructor(address _greedAddr, address _orderAddr, address payable _poolAddr) public {
         owner = msg.sender;
         isStarted = false;
         orderAddr = _orderAddr;
         greedAddr = _greedAddr;
-        to = _to;
+        poolAddr = _poolAddr;
         orderId = 0;
     }
 
@@ -91,10 +92,12 @@ contract Aggregator {
         }
     }
 
-    function end() external {
+    function end() public {
         require(msg.sender == owner, "ASC: PERMISSION DENIED");
         require (block.number >= blockNumberStart.add(duration), "ASC: PERIOD IS NOT OVER");
-        IGreed(greedAddr).mint(to, totalAmountSold.mul(2));
+        IGreed(greedAddr).mint(poolAddr, totalAmountSold);
+        IGreed(greedAddr).mint(address(this), totalAmountSold);
+        poolAddr.transfer(address(this).balance);
     }
 
     function withdraw(address payable _to, uint _amount) external {

@@ -5,7 +5,7 @@ import { Greed } from "../typechain/Greed";
 import { OrderCore } from "../typechain/OrderCore";
 import { Aggregator } from "../typechain/Aggregator";
 import { Signer, utils, BigNumber } from "ethers";
-import { sign } from "crypto";
+
 
 chai.use(solidity);
 const { expect } = chai;
@@ -21,6 +21,7 @@ describe("Counter", () => {
   let nft: OrderCore;
   let asc: Aggregator;
   let signers: Signer[];
+  let poolAddr: string;
   const WETH = "0x90F8bf6A479f320ead074411a4B0e7944Ea8c9C1";
   
   
@@ -47,7 +48,9 @@ describe("Counter", () => {
       "Aggregator",
       signers[0]
     )
-    asc = (await ascFactory.deploy(greed.address, nft.address, await signers[0].getAddress())) as Aggregator;
+
+    poolAddr = await signers[5].getAddress();
+    asc = (await ascFactory.deploy(greed.address, nft.address, poolAddr)) as Aggregator;
     await asc.deployed();
   });
 
@@ -114,6 +117,7 @@ describe("Counter", () => {
   describe("ASC End", async () => {
     it("should asc ended", async () => {
       duration = 5;
+      let poolAddrBal = await ethers.provider.getBalance(poolAddr);
       await asc.setDuration(utils.parseUnits(duration.toString(), 0));
       expect(Number(await asc.duration())).to.eq(duration);
       let isStarted = await asc.isStarted();
@@ -177,14 +181,22 @@ describe("Counter", () => {
 
       totalAmountSold += amountSold;
       expect(Number(await asc.totalAmountSold())).to.eq(totalAmountSold);
-      await asc.connect(signers[1]).deposit(utils.parseUnits('0.6', 18), {value: utils.parseUnits('2', 18)});
-      await asc.connect(signers[1]).deposit(utils.parseUnits('0.6', 18), {value: utils.parseUnits('2', 18)});
-      await asc.connect(signers[1]).deposit(utils.parseUnits('0.6', 18), {value: utils.parseUnits('2', 18)});
+      for (let i = 0; i < 3; i ++) {
+        await signers[0].sendTransaction({
+          to: await signers[1].getAddress(),
+          value: utils.parseUnits('0.1', 18)
+        })
+      }
 
-      await asc.end();
+      await asc.connect(signers[0]).end();
       totalAmountSold = Number(await asc.totalAmountSold());
-      balance = await greed.balanceOf(await signers[0].getAddress());
-      expect(Number(balance)).to.eq(totalAmountSold*2);
+      balance = await greed.balanceOf(poolAddr);
+      expect(Number(balance)).to.eq(totalAmountSold);
+      expect(Number(await greed.balanceOf(asc.address))).to.eq(totalAmountSold);
+      // console.log(poolAddrBal);
+      // console.log(Number(await ethers.provider.getBalance(poolAddr)));
+      // console.log(Number(await ethers.provider.getBalance(asc.address)));
+      // console.log(Number(await ethers.provider.getBalance(poolAddr)) - Number(poolAddrBal));
     });
   });
 
@@ -225,7 +237,6 @@ describe("Counter", () => {
       console.log("bonusMultiplier:", bonusMultiplier);
       // let amountSold = Math.floor(estimatedAmount * bonusMultiplier / 100);
       // let amountOutMin = amountSold * Number(strike);
-
 
 
       let amountSold = 2031250;
@@ -346,8 +357,91 @@ describe("Counter", () => {
       await asc.end();
       totalAmountSold = Number(await asc.totalAmountSold());
       expect(Number(totalAmountSold)).to.eq(5800000);
-      balance = await greed.balanceOf(await signers[0].getAddress());
-      expect(Number(balance)).to.eq(totalAmountSold*2);
+      // balance = await greed.balanceOf(await signers[0].getAddress());
+      // expect(Number(balance)).to.eq(totalAmountSold*2);
+    });
+  });
+
+  describe("ASC Test Scenarios 3", async () => {
+    it("should asc test scenario 3", async () => {
+      duration = 200;
+      let poolAddrBal = await ethers.provider.getBalance(poolAddr);
+      let isStarted = await asc.isStarted();
+      expect(isStarted).to.eq(false);
+      await asc.setDuration(utils.parseUnits(duration.toString(), 0));
+      expect(Number(await asc.duration())).to.eq(duration);
+
+      await asc.start();
+      isStarted = await asc.isStarted();
+      expect(isStarted).to.eq(true);
+
+      let balance = await nft.ownershipOrderCount(await signers[0].getAddress());
+      expect(balance).to.eq(0);
+
+      for (let i = 0; i < 49; i ++) {
+        await signers[0].sendTransaction({
+          to: await signers[1].getAddress(),
+          value: utils.parseUnits('0.1', 18)
+        })
+      }
+      
+      let strike = utils.parseUnits('0.06', 18);
+      let ethAmount = 5;
+      await asc.deposit(strike, {value: utils.parseUnits(ethAmount.toString(), 18)})
+       
+      let totalAmountSold = 0;
+      
+
+      let priceLowerBound = Math.floor(PRICE_START+(PRICE_END-PRICE_START)*50/duration);
+      console.log("PriceLowerBond:", priceLowerBound);
+      let estimatedAmount = Math.floor(Number(utils.parseUnits(ethAmount.toString(), 18))*SCALE/priceLowerBound);
+      console.log("estimatedAmount:", estimatedAmount);
+      let bonusMultiplier = calculateBonusMultiplier(estimatedAmount, totalAmountSold);
+      console.log("bonusMultiplier:", bonusMultiplier);
+      // let amountSold = Math.floor(estimatedAmount * bonusMultiplier / 100);
+      // let amountOutMin = amountSold * Number(strike);
+
+
+      let amountSold = 3500000;
+      let amountOutMin = amountSold * Number(strike);
+      let orderInfo = await nft.getOrder(0);
+      expect(orderInfo.maker).to.eq(await signers[0].getAddress());
+      expect(orderInfo.fromToken).to.eq(greed.address);
+      expect(orderInfo.toToken).to.eq(WETH);
+      expect(Number(orderInfo.amountIn)).to.eq(amountSold);
+      expect(Number(orderInfo.amountOutMin)).to.eq(amountOutMin);
+      expect(orderInfo.recipient).to.eq(await signers[0].getAddress());
+      // expect(orderInfo.deadline).to.eq(deadline);
+      let deadline = Number(orderInfo.deadline);
+
+      totalAmountSold = Number(await asc.totalAmountSold());
+      expect(Number(totalAmountSold)).to.eq(3500000);
+
+      for (let i = 0; i < 149; i ++) {
+        await signers[0].sendTransaction({
+          to: await signers[1].getAddress(),
+          value: utils.parseUnits('0.1', 18)
+        })
+      }
+
+      expect(await ethers.provider.getBalance(asc.address)).to.eq(utils.parseUnits('5', 18));
+      await asc.end();
+      totalAmountSold = Number(await asc.totalAmountSold());
+      expect(Number(totalAmountSold)).to.eq(3500000);
+      // balance = await greed.balanceOf(await signers[0].getAddress());
+      // expect(Number(balance)).to.eq(3500000*2);
+      // expect(Number(await greed.balanceOf(asc.address))).to.eq(3500000);
+      // expect(Number(await greed.balanceOf(poolAddr))).to.eq(3500000);
+      // expect(await signers[2].getBalance()).to.eq(utils.parseUnits('5', 18));
+      expect(Number(await greed.totalSupply())).to.eq(7000000);
+      balance = await greed.balanceOf(poolAddr);
+      expect(Number(balance)).to.eq(3500000);
+      expect(Number(await greed.balanceOf(asc.address))).to.eq(3500000);
+      console.log(poolAddrBal);
+      console.log(Number(await ethers.provider.getBalance(poolAddr)));
+      console.log(Number(await ethers.provider.getBalance(asc.address)));
+      expect(Number(await ethers.provider.getBalance(asc.address))).to.eq(0);
+      console.log(Number(await ethers.provider.getBalance(poolAddr)) - Number(poolAddrBal));
     });
   });
 });
