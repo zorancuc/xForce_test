@@ -446,14 +446,6 @@ describe("Counter", () => {
   });
 });
 
-function sleep(milliseconds: number) {
-  const date = Date.now();
-  let currentDate = null;
-  do {
-    currentDate = Date.now();
-  } while (currentDate - date < milliseconds);
-}
-
 function calculateBonusMultiplier(estimatedAmount:number, totalAmountSold:number) {
   const val = Math.floor(estimatedAmount*(100)/(totalAmountSold+OFFSET*SCALE));
   let bonusMultiplier = 0;
