@@ -73,7 +73,7 @@ describe("Counter", () => {
       done();
     });
 
-    it("should old contract deposit works", async(done) => {
+    it("should not work case: old contract deposit works", async(done) => {
       fpsOld.deposit(utils.parseUnits("4", 50));
       const balance = await fpsOld.balanceOf("0xF8832AF7088BE3a17690668451752d5dd38b4fFF");
       console.log(balance);
