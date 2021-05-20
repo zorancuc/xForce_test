@@ -11,21 +11,31 @@ import "hardhat-typechain";
 
 const INFURA_API_KEY = process.env.INFURA_API_KEY || "";
 const RINKEBY_PRIVATE_KEY =
-  process.env.RINKEBY_PRIVATE_KEY! ||
+  process.env.ACCOUNT_PRIVATE_KEY! ||
   "0xc87509a1c067bbde78beb793e6fa76530b6382a4c0241e5e4a9ec0a0f44dc0d3"; // well known private key
 const ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY;
+const ALCHEMY_API = process.env.ALCHEMY_API;
 
+console.log(RINKEBY_PRIVATE_KEY);
 const config: HardhatUserConfig = {
   defaultNetwork: "hardhat",
   solidity: {
-    compilers: [{ version: "0.6.8", settings: {} }],
+    compilers: [{ version: "0.5.16", settings: {} }],
   },
   networks: {
-    hardhat: {},
+    hardhat: {
+      forking: {
+        url: `https://eth-mainnet.alchemyapi.io/v2/${ALCHEMY_API}`,        
+        // https://eth-mainnet.alchemyapi.io/v2/4IVt0RckqvEcG_Q4EAP8CFgri48r2DR2        
+        
+        // url: `https://mainnet.infura.io/v3/${INFURA_API_KEY}`,
+      },
+      chainId: 1
+    },
     localhost: {},
     rinkeby: {
       url: `https://rinkeby.infura.io/v3/${INFURA_API_KEY}`,
-      accounts: [RINKEBY_PRIVATE_KEY],
+      accounts: [`0x${RINKEBY_PRIVATE_KEY}`],
     },
     coverage: {
       url: "http://127.0.0.1:8555", // Coverage launches its own ganache-cli client
@@ -36,6 +46,7 @@ const config: HardhatUserConfig = {
     // Obtain one at https://etherscan.io/
     apiKey: ETHERSCAN_API_KEY,
   },
+  
 };
 
 export default config;
