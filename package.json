@@ -41,6 +41,9 @@
     "typescript": "^4.0.5"
   },
   "dependencies": {
+    "@openzeppelin/contracts": "2.5.0",
+    "@openzeppelin/contracts-ethereum-package": "2.5.0",
+    "@openzeppelin/upgrades": "^2.8.0",
     "bignumber.js": "^9.0.1",
     "eip-712": "^0.4.3",
     "eth-permit": "^0.1.9",
